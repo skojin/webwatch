@@ -15,7 +15,7 @@ type WebsiteRule struct {
 	filter string
 }
 
-func getTextFromPage(url, cssSelector string) {
+func getTextFromPage(url, cssSelector string) string {
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
 		log.Fatal(err)
@@ -24,11 +24,10 @@ func getTextFromPage(url, cssSelector string) {
 	arr := doc.Find(cssSelector).Map(func(i int, s *goquery.Selection) string {
 		return strings.TrimSpace(s.Text())
 	})
-
-	fmt.Printf("Hi %v", arr)
+	return strings.Join(arr, "\n")
 }
 
-func loadUrls(filePath string) {
+func loadUrlRules(filePath string) []WebsiteRule {
 	f, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
@@ -37,15 +36,14 @@ func loadUrls(filePath string) {
 
 	var rules []WebsiteRule
 	scanner := bufio.NewScanner(f)
-  for scanner.Scan() {
+	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "http") {
-      rules = append(rules, WebsiteRule{url: scanner.Text()})
+			rules = append(rules, WebsiteRule{url: scanner.Text()})
 		} else {
-      if len(rules) > 0 && len(line) > 0 {
-        fmt.Println(rules[len(rules)-1], line)
-        rules[len(rules)-1].filter = line
-      }
+			if len(rules) > 0 && len(line) > 0 {
+				rules[len(rules)-1].filter = line
+			}
 		}
 	}
 
@@ -53,12 +51,28 @@ func loadUrls(filePath string) {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-  fmt.Println(rules)
+	return rules
+}
+
+func checkEachWebsite(rules []WebsiteRule, testMode bool) {
+	for _, rule := range rules {
+		t := getTextFromPage(rule.url, rule.filter)
+		if testMode {
+			fmt.Printf("%s\n   %s\n\n", rule.url, t)
+		} else {
+
+		}
+	}
 }
 
 func main() {
-	pathToUrls := flag.String("config", "urls.txt", "path to file with urls")
-	loadUrls(*pathToUrls)
-	// getTextFromPage("http://apple.multitronic.fi/en/products/1398619/iphone-se-64gb-space-grey", "#prod_stock span")
+	pathToUrlsPtr := flag.String("config", "urls.txt", "path to file with urls")
+	testModePtr := flag.Bool("test", false, "check each site and output result")
+	flag.Parse()
+
+	checkEachWebsite(loadUrlRules(*pathToUrlsPtr), *testModePtr)
+	// fmt.Printf("%v", rules)
+	// v := getTextFromPage("http://apple.multitronic.fi/en/products/1398619/iphone-se-64gb-space-grey", "#prod_stock span")
+	// fmt.Println(v)
 	// getTextFromPage("http://apple.multitronic.fi/en/products/1398619/iphone-se-64gb-space-grey", ".mt_well_light label")
 }
