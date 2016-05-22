@@ -2,17 +2,23 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 )
 
 type WebsiteRule struct {
-	url    string
-	filter string
+	Url    string
+	Filter string
+}
+type WebsiteValue struct {
+	Url   string
+	Value string
 }
 
 func getTextFromPage(url, cssSelector string) string {
@@ -39,10 +45,10 @@ func loadUrlRules(filePath string) []WebsiteRule {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "http") {
-			rules = append(rules, WebsiteRule{url: scanner.Text()})
+			rules = append(rules, WebsiteRule{Url: scanner.Text()})
 		} else {
 			if len(rules) > 0 && len(line) > 0 {
-				rules[len(rules)-1].filter = line
+				rules[len(rules)-1].Filter = line
 			}
 		}
 	}
@@ -54,25 +60,54 @@ func loadUrlRules(filePath string) []WebsiteRule {
 	return rules
 }
 
-func checkEachWebsite(rules []WebsiteRule, testMode bool) {
+func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
+	newvalues := []WebsiteValue{}
+  db := loadValueDb(dbPath)
 	for _, rule := range rules {
-		t := getTextFromPage(rule.url, rule.filter)
+		t := getTextFromPage(rule.Url, rule.Filter)
 		if testMode {
-			fmt.Printf("%s\n   %s\n\n", rule.url, t)
+			fmt.Printf("%s\n   %s\n\n", rule.Url, t)
 		} else {
-
+      if t != db[rule.Url] {
+        fmt.Printf("%s has beed updated\n", rule.Url)
+      }
+			newvalues = append(newvalues, WebsiteValue{rule.Url, t})
 		}
+	}
+	updateValueDb(dbPath, newvalues)
+}
+
+func loadValueDb(dbPath string) map[string]string {
+	dat, err := ioutil.ReadFile(dbPath)
+	if err != nil {
+		panic(err)
+	}
+
+	var values []WebsiteValue
+	json.Unmarshal(dat, &values)
+	
+  db := make(map[string]string)
+  for _,v := range values {
+    db[v.Url] = v.Value
+  }
+  return db
+}
+func updateValueDb(dbPath string, values []WebsiteValue) {
+	b, err := json.Marshal(values)
+	if err != nil {
+		panic(err)
+	}
+	err = ioutil.WriteFile("webwatch.db", b, 0644)
+	if err != nil {
+		panic(err)
 	}
 }
 
 func main() {
-	pathToUrlsPtr := flag.String("config", "urls.txt", "path to file with urls")
+  pathToUrlsPtr := flag.String("config", "urls.txt", "path to file with urls")
+	pathToDbPtr := flag.String("db", "webwatch.db", "path to database file")
 	testModePtr := flag.Bool("test", false, "check each site and output result")
 	flag.Parse()
 
-	checkEachWebsite(loadUrlRules(*pathToUrlsPtr), *testModePtr)
-	// fmt.Printf("%v", rules)
-	// v := getTextFromPage("http://apple.multitronic.fi/en/products/1398619/iphone-se-64gb-space-grey", "#prod_stock span")
-	// fmt.Println(v)
-	// getTextFromPage("http://apple.multitronic.fi/en/products/1398619/iphone-se-64gb-space-grey", ".mt_well_light label")
+	checkEachWebsite(loadUrlRules(*pathToUrlsPtr), *pathToDbPtr, *testModePtr)
 }
