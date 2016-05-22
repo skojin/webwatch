@@ -14,6 +14,9 @@ done
 
 ```
 
+# Download
+
+Download linux and OSX [binaries](https://github.com/skojin/webwatch/releases)
 
 # Alternatives
 https://github.com/thp/urlwatch
