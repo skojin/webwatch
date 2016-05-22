@@ -1,17 +1,26 @@
 # webwatch - command line util to check website changes
 
-./webwatch load list of urls and css selectors from urls.txt compare content with webwatch.db and output changes.
+./webwatch load list of URLs and CSS selectors from urls.txt, check for updates and output if have page was changed.
 
-You can setup notification with own tools, I do that with notify_me shell script ```./webwatch | ./notify_me```
+urls.txt is plain text file with following format
+```text
+http://target_url
+.css.selector
+http://www.amazon.com/dp/B00GDQ0RMG/ref=ods_gw_d_h1_s
+#priceblock_ourprice
+```
+
+# Notifications
+
+You can setup notification with your own tools, I do that with notify_me shell script ```./webwatch | ./notify_me```
 ```bash
 #!/bin/sh
 
 while read x; do 
   if [ -n "$x" ]; then # ignore blank
-		curl -i -X GET "https://api.telegram.org/BOTID:TOKEN/sendMessage?chat_id=CHAT_ID&text=$x"
+    curl -i -X GET "https://api.telegram.org/BOTID:TOKEN/sendMessage?chat_id=CHAT_ID&text=$x"
   fi
 done
-
 ```
 
 # Download
