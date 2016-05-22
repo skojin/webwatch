@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 type WebsiteRule struct {
@@ -24,7 +24,7 @@ type WebsiteValue struct {
 func getTextFromPage(url, cssSelector string) string {
 	doc, err := goquery.NewDocument(url)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	arr := doc.Find(cssSelector).Map(func(i int, s *goquery.Selection) string {
