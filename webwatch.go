@@ -62,15 +62,15 @@ func loadUrlRules(filePath string) []WebsiteRule {
 
 func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
 	newvalues := []WebsiteValue{}
-  db := loadValueDb(dbPath)
+	db := loadValueDb(dbPath)
 	for _, rule := range rules {
 		t := getTextFromPage(rule.Url, rule.Filter)
 		if testMode {
 			fmt.Printf("%s\n   %s\n\n", rule.Url, t)
 		} else {
-      if t != db[rule.Url] {
-        fmt.Printf("%s has beed updated\n", rule.Url)
-      }
+			if t != db[rule.Url] {
+				fmt.Printf("%s has beed updated\n", rule.Url)
+			}
 			newvalues = append(newvalues, WebsiteValue{rule.Url, t})
 		}
 	}
@@ -80,31 +80,35 @@ func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
 func loadValueDb(dbPath string) map[string]string {
 	dat, err := ioutil.ReadFile(dbPath)
 	if err != nil {
-		panic(err)
+		if os.IsNotExist(err) {
+			return map[string]string{}
+		} else {
+			panic(err)
+		}
 	}
 
 	var values []WebsiteValue
 	json.Unmarshal(dat, &values)
-	
-  db := make(map[string]string)
-  for _,v := range values {
-    db[v.Url] = v.Value
-  }
-  return db
+
+	db := map[string]string{}
+	for _, v := range values {
+		db[v.Url] = v.Value
+	}
+	return db
 }
 func updateValueDb(dbPath string, values []WebsiteValue) {
 	b, err := json.Marshal(values)
 	if err != nil {
 		panic(err)
 	}
-	err = ioutil.WriteFile("webwatch.db", b, 0644)
+	err = ioutil.WriteFile(dbPath, b, 0644)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func main() {
-  pathToUrlsPtr := flag.String("config", "urls.txt", "path to file with urls")
+	pathToUrlsPtr := flag.String("config", "urls.txt", "path to file with urls")
 	pathToDbPtr := flag.String("db", "webwatch.db", "path to database file")
 	testModePtr := flag.Bool("test", false, "check each site and output result")
 	flag.Parse()
