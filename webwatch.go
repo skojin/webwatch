@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha1"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -65,13 +66,14 @@ func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
 	db := loadValueDb(dbPath)
 	for _, rule := range rules {
 		t := getTextFromPage(rule.Url, rule.Filter)
+		t_hash := fmt.Sprintf("%x", sha1.Sum([]byte(t)))
 		if testMode {
-			fmt.Printf("%s\n   %s\n\n", rule.Url, t)
+			fmt.Printf("%s\n%q\n\n", rule.Url, t)
 		} else {
-			if t != db[rule.Url] {
-				fmt.Printf("%s has beed updated\n", rule.Url)
+			if t_hash != db[rule.Url] {
+				fmt.Printf("%s has been updated\n", rule.Url)
 			}
-			newvalues = append(newvalues, WebsiteValue{rule.Url, t})
+			newvalues = append(newvalues, WebsiteValue{rule.Url, t_hash})
 		}
 	}
 	updateValueDb(dbPath, newvalues)
