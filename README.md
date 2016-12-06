@@ -18,7 +18,7 @@ You can setup notification with your own tools, I do that with notify_me shell s
 
 while read x; do 
   if [ -n "$x" ]; then # ignore blank
-    curl -i -X GET "https://api.telegram.org/BOTID:TOKEN/sendMessage?chat_id=CHAT_ID&text=$x"
+    curl -i -X GET "https://api.telegram.org/BOTID:TOKEN/sendMessage" -F "chat_id=CHAT_ID" -F "text=$x"
   fi
 done
 ```
