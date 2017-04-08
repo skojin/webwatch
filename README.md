@@ -33,9 +33,15 @@ while read x; do
 done
 ```
 
-# Download
 
-Download linux and OSX [binaries](https://github.com/skojin/webwatch/releases)
+## Install
+
+Direct downloads are available through the [releases page](https://github.com/skojin/webwatch/releases/latest).
+
+If you have Go installed on your computer just run `go get`.
+
+    go get github.com/skojin/webwatch
+
 
 # Alternatives
 https://github.com/thp/urlwatch
