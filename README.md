@@ -4,10 +4,20 @@
 
 urls.txt is plain text file with following format
 ```text
+  comment starts with space, empty lines ignored
+
 http://target_url
-.css.selector
+#filter .as.css.selector
+
 http://www.amazon.com/dp/B00GDQ0RMG/ref=ods_gw_d_h1_s
 #priceblock_ourprice
+
+  filter started with > is shell command with page body as input, useful with https://github.com/ericchiang/pup
+https://news.ycombinator.com
+> sort | uniq | wc -l
+
+https://news.ycombinator.com
+> pup 'table table tr:nth-last-of-type(n+2) td.title a attr{href}'
 ```
 
 # Notifications

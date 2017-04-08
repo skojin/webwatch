@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html/charset"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -21,6 +23,55 @@ type WebsiteRule struct {
 type WebsiteValue struct {
 	Url   string
 	Value string
+}
+
+// @param filter css selector or "> shell command"
+func getMatchedTextFromPage(url, filter string) string {
+	if strings.HasPrefix(filter, ">") {
+		command := strings.TrimSpace(filter[1:])
+		return executeCommand(command, downloadPage(url))
+	} else {
+		return getMatchedCssTextFromPage(url, filter)
+	}
+}
+
+func downloadPage(url string) string {
+	// get and convert to utf8
+	resp, err := http.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	utf8, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	if err != nil {
+		panic(err)
+	}
+	body, err := ioutil.ReadAll(utf8)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(body)
+}
+
+func executeCommand(command, pageBody string) string {
+	cmd := exec.Command("bash", "-c", command)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		panic(err)
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, pageBody)
+	}()
+
+	out, err := cmd.Output()
+	if err != nil {
+		panic(err)
+	}
+
+	return strings.TrimSpace(string(out))
 }
 
 func getMatchedCssTextFromPage(url, cssSelector string) string {
@@ -59,8 +110,8 @@ func loadUrlRules(filePath string) []WebsiteRule {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "http") {
 			rules = append(rules, WebsiteRule{Url: scanner.Text()})
-		} else if strings.HasPrefix(line, "#") {
-			// comment line starts with #
+		} else if strings.HasPrefix(line, " ") {
+			// comment line starts with space
 		} else {
 			// if we already have rules and current line not empty, then set this filter to last rule
 			if len(rules) > 0 && len(line) > 0 {
@@ -80,7 +131,7 @@ func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
 	newvalues := []WebsiteValue{}
 	db := loadValueDb(dbPath)
 	for _, rule := range rules {
-		t := getMatchedCssTextFromPage(rule.Url, rule.Filter)
+		t := getMatchedTextFromPage(rule.Url, rule.Filter)
 		t_hash := fmt.Sprintf("%x", sha1.Sum([]byte(t)))
 		if testMode {
 			fmt.Printf("%s\n%q\n\n", rule.Url, t)
