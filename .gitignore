@@ -1,4 +1,5 @@
 /webwatch
 /deploy
+/build*
 /urls.txt
 /webwatch.db

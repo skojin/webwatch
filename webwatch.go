@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html/charset"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 type WebsiteRule struct {
@@ -22,12 +23,23 @@ type WebsiteValue struct {
 	Value string
 }
 
-func getTextFromPage(url, cssSelector string) string {
-	doc, err := goquery.NewDocument(url)
+func getMatchedCssTextFromPage(url, cssSelector string) string {
+	// get and convert to utf8
+	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
 	}
-
+	defer resp.Body.Close()
+	utf8, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	if err != nil {
+		panic(err)
+	}
+	// parse
+	doc, err := goquery.NewDocumentFromReader(utf8)
+	if err != nil {
+		panic(err)
+	}
+	// css query
 	arr := doc.Find(cssSelector).Map(func(i int, s *goquery.Selection) string {
 		return strings.TrimSpace(s.Text())
 	})
@@ -47,7 +59,10 @@ func loadUrlRules(filePath string) []WebsiteRule {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "http") {
 			rules = append(rules, WebsiteRule{Url: scanner.Text()})
+		} else if strings.HasPrefix(line, "#") {
+			// comment line starts with #
 		} else {
+			// if we already have rules and current line not empty, then set this filter to last rule
 			if len(rules) > 0 && len(line) > 0 {
 				rules[len(rules)-1].Filter = line
 			}
@@ -65,7 +80,7 @@ func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
 	newvalues := []WebsiteValue{}
 	db := loadValueDb(dbPath)
 	for _, rule := range rules {
-		t := getTextFromPage(rule.Url, rule.Filter)
+		t := getMatchedCssTextFromPage(rule.Url, rule.Filter)
 		t_hash := fmt.Sprintf("%x", sha1.Sum([]byte(t)))
 		if testMode {
 			fmt.Printf("%s\n%q\n\n", rule.Url, t)
