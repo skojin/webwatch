@@ -1,0 +1,24 @@
+sudo: false
+language: go
+go:
+- release
+env:
+  global:
+  - VERSION=$(cat VERSION)
+before_script:
+- go get
+before_deploy:
+- mkdir -p release
+- GOOS=linux  GOARCH=amd64 go build -o release/webwatch-v$VERSION-linux-amd64
+- GOOS=darwin GOARCH=amd64 go build -o release/webwatch-v$VERSION-darwin-amd64
+
+deploy:
+  provider: releases
+  api_key:
+    secure: JHFInYT6wzt7m4QWs7JyQeOTPEt9Tj89idrtuR0IBU35s4+B5d0KwnCASMV5uKMy/BPYZrQDmMexD+2S1F49CoRYSz3LTf9VDUpXOJ/BqrhbODnlPcNrkJg1IwocPGcRGamEFMtu1vnxM0z2xq8wiCy7dqaBgLie6QNLKFueTGzrC6tw/HPfJ1Tspoa8p8ZRLyk+k201O+OjNnZNd4R2qSf3vVTUw9mAAJhQ8mIjxzXE5FZyWeVHLHrCBidggiXPXOTcStWFwSOos5wegHawiQsHlFfsO5GupzQuRNC1XdTwbH5nGtDzKXMi+N7BiCqFZk88TrmvZFRTACj9pihg6NMlwEZIIezKrjH0MumUaEhLe79hHrXUTD/ZTYQK8icV712iPCjNLnoJyQblmaDd8/j8vcbuqmchQsLAMMuMITgG7Lbm4F3YWaqRdsvkAD89euC2ll2jN1X2aCWTH1NohcNip7Qpvv995NB18rA8WxXw1bPKHawAbMJ+A8MGY6VDftd0XvrMOAFRX/uNAuSwXw02rYsM1ehkkabJS7OiJk8AQHymQ+Gh2EyEi9jOm5YAT6A71x7tZm5hTBt0PCVS3VbK8cqkdujfsWfyEs6Bii7cjum97jGQ1Egq6Q243cK7NrCogFu4mcBJbQ1djD6tDLrPyTA3j2kKcUTBpnfBbio=
+  file:
+    - "release/webwatch-v$VERSION-linux-amd64"
+    - "release/webwatch-v$VERSION-darwin-amd64"
+  skip_cleanup: true
+  on:
+    tags: true
