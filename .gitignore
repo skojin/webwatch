@@ -2,4 +2,4 @@
 /deploy
 /build*
 /urls.txt
-/webwatch.db
+/.webwatch.db

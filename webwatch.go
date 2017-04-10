@@ -137,7 +137,12 @@ func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
 			fmt.Printf("%s\n%q\n\n", rule.Url, t)
 		} else {
 			if t_hash != db[rule.Url] {
-				fmt.Printf("%s has been updated\n", rule.Url)
+				// is matched value is long or looks like html, not return value
+				if len(t) > 16 || strings.Contains(t, "<") || strings.Contains(t, "\"") {
+					fmt.Printf("%s was updated\n", rule.Url)
+				} else {
+					fmt.Printf("%s updated to %s\n", rule.Url, t)
+				}
 			}
 			newvalues = append(newvalues, WebsiteValue{rule.Url, t_hash})
 		}
@@ -177,7 +182,7 @@ func updateValueDb(dbPath string, values []WebsiteValue) {
 
 func main() {
 	pathToUrlsPtr := flag.String("config", "urls.txt", "path to file with urls")
-	pathToDbPtr := flag.String("db", "webwatch.db", "path to database file")
+	pathToDbPtr := flag.String("db", ".webwatch.db", "path to database file")
 	testModePtr := flag.Bool("test", false, "check each site and output result")
 	flag.Parse()
 
