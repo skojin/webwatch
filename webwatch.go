@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/net/html/charset"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +13,9 @@ import (
 	"os/exec"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html/charset"
 )
 
 type WebsiteRule struct {
@@ -139,7 +140,7 @@ func checkEachWebsite(rules []WebsiteRule, dbPath string, testMode bool) {
 		} else {
 			if t_hash != db[rule.Url] {
 				// is matched value is long or looks like html, not return value
-				if len(t) == 0 || utf8.RuneCountInString(t) > 16 || strings.Contains(t, "<") || strings.Contains(t, "\"") {
+				if len(t) == 0 || utf8.RuneCountInString(t) > 32 || strings.Contains(t, "<") || strings.Contains(t, "\"") {
 					fmt.Printf("%s was updated\n", rule.Url)
 				} else {
 					fmt.Printf("%s updated to %s\n", rule.Url, t)
